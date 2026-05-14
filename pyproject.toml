@@ -4,5 +4,6 @@ members = ["packages/*"]
 [tool.uv.sources]
 mate-bench = { workspace = true }
 mate-runtime-rocm = { workspace = true }
+mate-runtime-cuda = { workspace = true }
 mate-engine-ollama = { workspace = true }
 mate-workload-llm = { workspace = true }
