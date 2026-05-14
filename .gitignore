@@ -1,0 +1,30 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# uv
+uv.lock
+
+# Node / Cloudflare Worker
+worker/node_modules/
+worker/.wrangler/
+worker/dist/
+
+# Results (local benchmark output)
+results/
+
+# Secrets / local config
+.env
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Internal planning notes
+BENCH_NOTES.md

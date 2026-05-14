@@ -1,0 +1,34 @@
+{
+  "id": "llm-short-v1",
+  "version": 1,
+  "license": "CC0-1.0",
+  "source": "mate-bench project (original)",
+  "description": "Five short prompts (~40-60 tokens input, 200 tokens max output). Covers code, explanation, and factual tasks.",
+  "prompts": [
+    {
+      "id": "s01",
+      "text": "Explain what a REST API is and describe the difference between a GET and a POST request. Give a concrete example of when you would use each.",
+      "max_tokens": 200
+    },
+    {
+      "id": "s02",
+      "text": "What is the difference between supervised and unsupervised machine learning? Give one real-world example of a problem solved by each approach.",
+      "max_tokens": 200
+    },
+    {
+      "id": "s03",
+      "text": "Write a Python function called is_palindrome that checks whether a given string is a palindrome. The function should ignore spaces and capitalization.",
+      "max_tokens": 200
+    },
+    {
+      "id": "s04",
+      "text": "Name the three most significant human-caused contributors to climate change and briefly explain the mechanism by which each one traps heat in the atmosphere.",
+      "max_tokens": 200
+    },
+    {
+      "id": "s05",
+      "text": "Explain how HTTPS protects data in transit. What role does TLS play, and what would an attacker be able to see if only HTTP were used instead?",
+      "max_tokens": 200
+    }
+  ]
+}

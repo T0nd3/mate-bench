@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "mate-bench Result Schema v1",
+  "type": "object",
+  "required": [
+    "schema_version", "submitted_at", "mode", "workload", "engine",
+    "engine_version", "model", "profile", "test_set", "engine_config",
+    "system", "bench", "measurement", "submitter"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "submitted_at": { "type": "string", "format": "date-time" },
+    "mode": { "type": "string", "enum": ["closed", "open"] },
+    "workload": { "type": "string", "minLength": 1 },
+    "engine": { "type": "string", "minLength": 1 },
+    "engine_version": { "type": "string", "minLength": 1 },
+    "model": {
+      "type": "object",
+      "required": ["name", "source", "source_ref"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "source": { "type": "string", "enum": ["ollama", "huggingface", "local"] },
+        "source_ref": { "type": "string" },
+        "file_hash": { "type": ["string", "null"] },
+        "file_hash_available": { "type": "boolean" }
+      }
+    },
+    "profile": { "type": "string", "enum": ["quick", "standard", "full"] },
+    "test_set": {
+      "type": "object",
+      "required": ["hash"],
+      "properties": {
+        "id": { "type": "string" },
+        "hash": { "type": "string" },
+        "duration_seconds": { "type": ["number", "null"] },
+        "custom": { "type": "boolean", "default": false },
+        "files": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "engine_config": {
+      "type": "object",
+      "required": ["is_reference"],
+      "properties": {
+        "is_reference": { "type": "boolean" }
+      }
+    },
+    "system": {
+      "type": "object",
+      "required": ["gpu_vendor", "gpu_name", "gpu_chip", "vram_gb", "runtime", "driver", "os", "kernel"],
+      "additionalProperties": false,
+      "properties": {
+        "gpu_vendor": { "type": "string", "enum": ["amd", "nvidia", "intel", "cpu"] },
+        "gpu_name": { "type": "string" },
+        "gpu_chip": { "type": "string" },
+        "vram_gb": { "type": "number", "minimum": 0, "maximum": 200 },
+        "runtime": { "type": "string" },
+        "driver": { "type": "string" },
+        "os": { "type": "string" },
+        "kernel": { "type": "string" }
+      }
+    },
+    "bench": {
+      "type": "object",
+      "required": ["core_version"],
+      "additionalProperties": false,
+      "properties": {
+        "core_version": { "type": "string" },
+        "plugin_versions": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "measurement": {
+      "type": "object",
+      "required": ["runs", "warmup_runs", "median", "std_dev", "vram_peak_gb", "throttling_detected"],
+      "additionalProperties": false,
+      "properties": {
+        "runs": { "type": "integer", "minimum": 1 },
+        "warmup_runs": { "type": "integer", "minimum": 0 },
+        "median": { "type": "object" },
+        "std_dev": { "type": "object" },
+        "vram_peak_gb": { "type": "number", "minimum": 0 },
+        "throttling_detected": { "type": "boolean" }
+      }
+    },
+    "submitter": {
+      "type": "object",
+      "required": ["anonymous_id"],
+      "additionalProperties": false,
+      "properties": {
+        "anonymous_id": { "type": "string" }
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "required": ["hash"],
+      "additionalProperties": false,
+      "properties": {
+        "hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+      }
+    }
+  }
+}

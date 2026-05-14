@@ -1,0 +1,25 @@
+[project]
+name = "mate-runtime-rocm"
+version = "0.1.0"
+description = "ROCm runtime plugin for mate-bench"
+requires-python = ">=3.11"
+dependencies = [
+    "mate-bench>=0.1,<0.2",
+]
+
+[project.entry-points."mate_bench.runtime"]
+rocm = "mate_runtime_rocm:RocmRuntime"
+
+[tool.mate-bench]
+requires_mate_bench = ">=0.1,<0.2"
+api_version = 1
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mate_runtime_rocm"]

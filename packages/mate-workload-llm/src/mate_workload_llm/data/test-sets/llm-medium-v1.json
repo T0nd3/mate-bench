@@ -1,0 +1,24 @@
+{
+  "id": "llm-medium-v1",
+  "version": 1,
+  "license": "CC0-1.0",
+  "source": "mate-bench project (original)",
+  "description": "Three medium prompts (~400-500 tokens input, 500 tokens max output). Covers summarization, technical analysis, and code review tasks.",
+  "prompts": [
+    {
+      "id": "m01",
+      "text": "A development team is building a web application that stores user profiles, product listings, and purchase orders. The product catalog currently has 2 million entries. Marketing wants to support full-text search across product names, descriptions, and tags. The operations team reports that the three slowest queries are: (1) fetching all orders for a given user sorted by date, (2) looking up a product by its SKU code, and (3) searching product descriptions for a keyword. The database is PostgreSQL 15. The schema for the relevant tables is as follows. The users table has columns: id (integer primary key), email (text, unique), created_at (timestamp). The products table has columns: id (integer primary key), sku (text, unique), name (text), description (text), tags (text array), price (numeric). The orders table has columns: id (integer primary key), user_id (integer referencing users), created_at (timestamp), status (text). The order_items table has columns: order_id (integer), product_id (integer), quantity (integer), unit_price (numeric).\n\nFor each of the three slow queries described above, recommend the most appropriate index type and explain why it is a better choice than a standard B-tree index for that specific access pattern.",
+      "max_tokens": 500
+    },
+    {
+      "id": "m02",
+      "text": "An engineering team maintains a monolithic Python web application that has grown to 180,000 lines of code over six years. The application handles customer orders, inventory management, invoicing, and a basic CRM. The team consists of eight backend engineers. Deployment currently takes 45 minutes and requires a full application restart, causing roughly three minutes of downtime per release. The team releases twice per week on average. The codebase has 34 percent test coverage. Three engineers have proposed splitting the application into microservices. Their argument is that smaller services would be easier to test, deploy independently, and scale horizontally. Two engineers are opposed. They argue that the inter-service communication overhead, the need for distributed transactions across the order and inventory domains, and the team size make microservices premature. The remaining three engineers are undecided.\n\nSummarize the strongest argument on each side of this debate. Then give your recommendation for what the team should do in the next six months, with a brief justification.",
+      "max_tokens": 500
+    },
+    {
+      "id": "m03",
+      "text": "The following Python function was submitted for code review. It is intended to read a list of user records from a CSV file, validate each record, and insert valid records into a PostgreSQL database using the psycopg2 library.\n\nimport csv\nimport psycopg2\n\ndef import_users(filepath, db_url):\n    conn = psycopg2.connect(db_url)\n    cur = conn.cursor()\n    with open(filepath) as f:\n        reader = csv.DictReader(f)\n        for row in reader:\n            if row['email'] and row['name']:\n                cur.execute(\n                    'INSERT INTO users (name, email) VALUES (' + row['name'] + ', ' + row['email'] + ')',\n                )\n    conn.commit()\n    cur.close()\n    conn.close()\n\nIdentify all bugs and security vulnerabilities in this function. For each issue found, explain the problem and provide a corrected version of the affected line or block.",
+      "max_tokens": 500
+    }
+  ]
+}

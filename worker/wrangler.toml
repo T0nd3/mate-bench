@@ -1,0 +1,9 @@
+name = "mate-bench-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+account_id = "27f81d43eb028aafd002283332cff05a"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mate-bench-submissions"
+database_id = "f4edf4d1-c57b-449c-9dcc-bc1a418824da"
