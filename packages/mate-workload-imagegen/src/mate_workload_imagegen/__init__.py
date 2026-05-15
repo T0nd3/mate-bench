@@ -1,3 +1,8 @@
+"""Image generation workload plugin for mate-bench (open mode only).
+
+Measures txt2img throughput (images/s, steps/s) across a fixed prompt
+suite.  Closed mode is intentionally unsupported — see ImageGenWorkload.
+"""
 from __future__ import annotations
 
 import json
@@ -15,6 +20,8 @@ from mate_bench.plugin import (
 
 from ._measure import measure
 from ._profiles import BUNDLED_TEST_SETS, PROFILES, TEST_SETS
+
+__all__ = ["ImageGenWorkload"]
 
 
 class ImageGenWorkload:

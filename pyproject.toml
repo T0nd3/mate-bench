@@ -1,6 +1,9 @@
 [tool.uv.workspace]
 members = ["packages/*"]
 
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+
 [tool.uv.sources]
 mate-bench = { workspace = true }
 mate-runtime-rocm = { workspace = true }

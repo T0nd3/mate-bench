@@ -33,6 +33,7 @@ class _RunStats:
 
 
 def _aggregate_run(results: list[_ImageResult], steps: int) -> _RunStats:
+    """Compute images/s, steps/s and time/image from a single run's results."""
     total_time = sum(r.generation_time_s for r in results)
     n = len(results)
     time_per_image = total_time / n if n > 0 else 0.0

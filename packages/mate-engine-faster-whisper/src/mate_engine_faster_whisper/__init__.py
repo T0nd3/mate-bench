@@ -1,3 +1,8 @@
+"""faster-whisper engine plugin for mate-bench.
+
+Wraps WhisperModel with automatic CUDA/CPU device selection and
+in-process model caching to avoid redundant weight loads across runs.
+"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -5,6 +10,8 @@ from pathlib import Path
 from mate_bench.plugin import PluginManifest
 
 from ._transcribe import TranscribeResult, transcribe
+
+__all__ = ["FasterWhisperEngine", "TranscribeResult"]
 
 
 def _resolve_device(device: str) -> str:

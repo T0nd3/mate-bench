@@ -1,3 +1,8 @@
+"""Speech-to-text workload plugin for mate-bench.
+
+Benchmarks STT transcription speed (RTF) and accuracy (WER) using
+LibriSpeech test-clean audio clips with a faster-whisper backend.
+"""
 from __future__ import annotations
 
 import json
@@ -18,6 +23,8 @@ from mate_bench.plugin import (
 from ._download import fetch_clips, fetch_manifest
 from ._measure import measure
 from ._profiles import PROFILES, TEST_SETS
+
+__all__ = ["SttWorkload"]
 
 _STT_DIR = TEST_SETS_DIR / "stt"
 

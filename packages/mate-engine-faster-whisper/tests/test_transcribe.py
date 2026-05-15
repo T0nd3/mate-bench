@@ -73,7 +73,7 @@ class TestFasterWhisperEngine:
         mock_model = _mock_model()
         mock_cls.return_value = mock_model
 
-        with patch("mate_engine_faster_whisper.WhisperModel", mock_cls, create=True):
+        with patch("faster_whisper.WhisperModel", mock_cls):
             with patch("mate_engine_faster_whisper._transcribe.transcribe", return_value=MagicMock()):
                 engine._load_model("large-v3")
                 engine._load_model("large-v3")
