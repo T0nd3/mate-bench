@@ -27,14 +27,16 @@ import json
 import os
 import sys
 import tarfile
-import tempfile
 import urllib.request
 from pathlib import Path
 
 LIBRISPEECH_URL = "https://www.openslr.org/resources/12/test-clean.tar.gz"
 CDN_BASE = "https://pub-f27eb09940c14a8dac6ae7fe10e789f3.r2.dev"
-R2_BUCKET = os.environ.get("R2_BUCKET_NAME", "mate-bench")
+R2_BUCKET = os.environ.get("R2_BUCKET_NAME", "mate-bench-assets")
 R2_PREFIX = "stt"
+
+# Persistent download cache — avoids re-downloading 346 MB on re-runs
+CACHE_DIR = Path.home() / ".cache" / "mate-bench" / "librispeech"
 
 # Clip duration bounds for selection
 MIN_DURATION_S = 5.0
@@ -52,12 +54,32 @@ def sha256_file(path: Path) -> str:
     return f"sha256:{h.hexdigest()}"
 
 
-def download_librispeech(cache_dir: Path) -> Path:
-    archive = cache_dir / "test-clean.tar.gz"
+def flac_duration(path: Path) -> float:
+    """Read exact duration from FLAC STREAMINFO block (no external deps)."""
+    with path.open("rb") as f:
+        header = f.read(42)
+    if header[:4] != b"fLaC":
+        return 0.0
+    # STREAMINFO starts at byte 8 (after 'fLaC' + 4-byte metadata block header)
+    info = header[8:]
+    sample_rate = (info[10] << 12) | (info[11] << 4) | (info[12] >> 4)
+    total_samples = (
+        ((info[13] & 0x0F) << 32)
+        | (info[14] << 24)
+        | (info[15] << 16)
+        | (info[16] << 8)
+        | info[17]
+    )
+    return total_samples / sample_rate if sample_rate else 0.0
+
+
+def download_librispeech() -> Path:
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    archive = CACHE_DIR / "test-clean.tar.gz"
     if archive.exists():
         print(f"  Using cached archive: {archive}")
         return archive
-    print(f"  Downloading LibriSpeech test-clean (~346 MB)...")
+    print(f"  Downloading LibriSpeech test-clean (~346 MB) to {archive}...")
     with urllib.request.urlopen(LIBRISPEECH_URL) as resp:  # noqa: S310
         total = int(resp.headers.get("Content-Length", 0))
         downloaded = 0
@@ -72,12 +94,22 @@ def download_librispeech(cache_dir: Path) -> Path:
     return archive
 
 
-def extract_and_select(archive: Path, extract_dir: Path) -> list[dict]:
-    """Extract archive, parse transcripts, return clip metadata sorted by duration."""
-    print("  Extracting archive...")
+def extract_librispeech(archive: Path) -> Path:
+    """Extract archive into the persistent cache dir (idempotent)."""
+    extract_dir = CACHE_DIR / "extracted"
+    marker = extract_dir / "LibriSpeech" / "test-clean"
+    if marker.exists():
+        print(f"  Using already-extracted data: {marker}")
+        return extract_dir
+    extract_dir.mkdir(parents=True, exist_ok=True)
+    print(f"  Extracting archive to {extract_dir} ...")
     with tarfile.open(archive, "r:gz") as tf:
         tf.extractall(extract_dir)
+    return extract_dir
 
+
+def extract_and_select(extract_dir: Path) -> list[dict]:
+    """Parse transcripts, return clip metadata sorted by actual duration."""
     clips: list[dict] = []
 
     # LibriSpeech structure: LibriSpeech/test-clean/<speaker>/<chapter>/
@@ -97,19 +129,19 @@ def extract_and_select(archive: Path, extract_dir: Path) -> list[dict]:
             flac_path = chapter_dir / f"{clip_id}.flac"
             if not flac_path.exists():
                 continue
-            size = flac_path.stat().st_size
-            # Estimate duration: FLAC at ~64 kbps ≈ 8000 bytes/s
-            est_duration_s = size / 8000
-            if MIN_DURATION_S <= est_duration_s <= MAX_DURATION_S:
+            duration_s = flac_duration(flac_path)
+            if duration_s == 0.0:
+                continue
+            if MIN_DURATION_S <= duration_s <= MAX_DURATION_S:
                 clips.append({
                     "id": clip_id,
                     "path": flac_path,
-                    "est_duration_s": est_duration_s,
+                    "size_bytes": flac_path.stat().st_size,
+                    "duration_s": duration_s,
                     "reference": reference,
                 })
 
-    # Sort by estimated duration for diversity, take a spread
-    clips.sort(key=lambda c: c["est_duration_s"])
+    clips.sort(key=lambda c: c["duration_s"])
     return clips
 
 
@@ -129,7 +161,7 @@ def upload_clip(s3, clip_path: Path, clip_id: str, dry_run: bool) -> str:
     key = f"{R2_PREFIX}/clips/{clip_path.name}"
     url = f"{CDN_BASE}/{key}"
     if dry_run:
-        print(f"  [dry-run] Would upload {clip_path.name} → {url}")
+        print(f"  [dry-run] Would upload {clip_path.name} -> {url}")
         return url
     print(f"  Uploading {clip_path.name}...", end=" ", flush=True)
     s3.upload_file(str(clip_path), R2_BUCKET, key, ExtraArgs={"ContentType": "audio/flac"})
@@ -143,7 +175,7 @@ def upload_manifest(s3, manifest: dict, name: str, dry_run: bool) -> tuple[str, 
     url = f"{CDN_BASE}/{key}"
     sha256 = f"sha256:{hashlib.sha256(content).hexdigest()}"
     if dry_run:
-        print(f"  [dry-run] Would upload manifest → {url}  ({sha256})")
+        print(f"  [dry-run] Would upload manifest -> {url}  ({sha256})")
         return url, sha256
     print(f"  Uploading manifest {name}...", end=" ", flush=True)
     import io
@@ -170,13 +202,13 @@ def build_manifest(clips: list[dict], s3, dry_run: bool) -> list[dict]:
     for clip in clips:
         clip_path = clip["path"]
         sha = sha256_file(clip_path)
-        # Compute accurate duration from file size for FLAC
         url = upload_clip(s3, clip_path, clip["id"], dry_run)
         result.append({
             "id": clip["id"],
             "url": url,
             "sha256": sha,
-            "duration_s": round(clip["est_duration_s"], 2),
+            "size_bytes": clip["size_bytes"],
+            "duration_s": round(clip["duration_s"], 3),
             "reference": clip["reference"],
         })
     return result
@@ -195,51 +227,51 @@ def main() -> None:
 
     s3 = None if args.dry_run else _r2_client()
 
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path = Path(tmp)
+    print("=== Step 1: Download LibriSpeech ===")
+    archive = download_librispeech()
 
-        print("=== Step 1: Download LibriSpeech ===")
-        archive = download_librispeech(tmp_path)
+    print("=== Step 2: Extract + select clips ===")
+    extract_dir = extract_librispeech(archive)
+    all_clips = extract_and_select(extract_dir)
+    print(f"  Found {len(all_clips)} clips in {MIN_DURATION_S}–{MAX_DURATION_S}s range")
 
-        print("=== Step 2: Extract + select clips ===")
-        all_clips = extract_and_select(archive, tmp_path)
-        print(f"  Found {len(all_clips)} clips in {MIN_DURATION_S}–{MAX_DURATION_S}s range")
+    if len(all_clips) < STANDARD_COUNT:
+        print(f"WARNING: only {len(all_clips)} clips found, need {STANDARD_COUNT}", file=sys.stderr)
 
-        if len(all_clips) < STANDARD_COUNT:
-            print(f"WARNING: only {len(all_clips)} clips found, need {STANDARD_COUNT}", file=sys.stderr)
+    quick_clips    = select_diverse(all_clips, QUICK_COUNT)
+    standard_clips = select_diverse(all_clips, STANDARD_COUNT)
 
-        quick_clips = select_diverse(all_clips, QUICK_COUNT)
-        standard_clips = select_diverse(all_clips, STANDARD_COUNT)
+    print("=== Step 3: Upload clips + manifests ===")
+    quick_clip_data    = build_manifest(quick_clips,    s3, args.dry_run)
+    standard_clip_data = build_manifest(standard_clips, s3, args.dry_run)
 
-        print("=== Step 3: Upload clips + manifests ===")
-        quick_clip_data = build_manifest(quick_clips, s3, args.dry_run)
-        standard_clip_data = build_manifest(standard_clips, s3, args.dry_run)
+    quick_manifest = {
+        "version": "stt-librispeech-quick-v1",
+        "license": "CC BY 4.0",
+        "source": "LibriSpeech test-clean (Panayotov et al., 2015) — openslr.org/12",
+        "clips": quick_clip_data,
+    }
+    standard_manifest = {
+        "version": "stt-librispeech-standard-v1",
+        "license": "CC BY 4.0",
+        "source": "LibriSpeech test-clean (Panayotov et al., 2015) — openslr.org/12",
+        "clips": standard_clip_data,
+    }
 
-        quick_manifest = {
-            "version": "stt-librispeech-quick-v1",
-            "license": "CC BY 4.0",
-            "source": "LibriSpeech test-clean (Panayotov et al., 2015) — openslr.org/12",
-            "clips": quick_clip_data,
-        }
-        standard_manifest = {
-            "version": "stt-librispeech-standard-v1",
-            "license": "CC BY 4.0",
-            "source": "LibriSpeech test-clean (Panayotov et al., 2015) — openslr.org/12",
-            "clips": standard_clip_data,
-        }
+    quick_url, quick_sha = upload_manifest(s3, quick_manifest, "stt-librispeech-quick-v1.json",    args.dry_run)
+    std_url,   std_sha   = upload_manifest(s3, standard_manifest, "stt-librispeech-standard-v1.json", args.dry_run)
 
-        quick_url, quick_sha = upload_manifest(s3, quick_manifest, "stt-librispeech-quick-v1.json", args.dry_run)
-        std_url, std_sha = upload_manifest(s3, standard_manifest, "stt-librispeech-standard-v1.json", args.dry_run)
+    quick_size = sum(c["size_bytes"] for c in quick_clip_data)
+    std_size   = sum(c["size_bytes"] for c in standard_clip_data)
 
     print()
     print("=== Step 4: Paste into _profiles.py ===")
     print()
-    print("# Replace the sha256 / size_bytes / url values in TEST_SETS:")
+    print('# Replace the TEST_SETS entries in _profiles.py with:')
     print(f'    "stt-librispeech-quick-v1": TestSetSpec(')
     print(f'        id="stt-librispeech-quick-v1",')
     print(f'        url="{quick_url}",')
     print(f'        sha256="{quick_sha}",')
-    quick_size = sum(c.get("size_bytes", 0) for c in quick_clip_data)
     print(f'        size_bytes={quick_size},')
     print(f'        license="CC BY 4.0",')
     print(f'        source="LibriSpeech test-clean (Panayotov et al., 2015)",')
@@ -249,7 +281,6 @@ def main() -> None:
     print(f'        id="stt-librispeech-standard-v1",')
     print(f'        url="{std_url}",')
     print(f'        sha256="{std_sha}",')
-    std_size = sum(c.get("size_bytes", 0) for c in standard_clip_data)
     print(f'        size_bytes={std_size},')
     print(f'        license="CC BY 4.0",')
     print(f'        source="LibriSpeech test-clean (Panayotov et al., 2015)",')

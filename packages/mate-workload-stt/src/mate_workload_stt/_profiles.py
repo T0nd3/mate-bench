@@ -10,16 +10,16 @@ TEST_SETS: dict[str, TestSetSpec] = {
     "stt-librispeech-quick-v1": TestSetSpec(
         id="stt-librispeech-quick-v1",
         url=f"{CDN_BASE}/stt/stt-librispeech-quick-v1.json",
-        sha256="sha256:PENDING",  # run: uv run python scripts/prepare_stt_testset.py
-        size_bytes=0,
+        sha256="sha256:420a49113d77e4e72a1740eeb9fff9b1918def6821c994b1d2c7e59990b8adc3",
+        size_bytes=754300,
         license="CC BY 4.0",
         source="LibriSpeech test-clean (Panayotov et al., 2015) — openslr.org/12",
     ),
     "stt-librispeech-standard-v1": TestSetSpec(
         id="stt-librispeech-standard-v1",
         url=f"{CDN_BASE}/stt/stt-librispeech-standard-v1.json",
-        sha256="sha256:PENDING",
-        size_bytes=0,
+        sha256="sha256:66a200da99544095c68b90fff5287ed4460b61c854ef29a29524373973a2915b",
+        size_bytes=3184083,
         license="CC BY 4.0",
         source="LibriSpeech test-clean (Panayotov et al., 2015) — openslr.org/12",
     ),
