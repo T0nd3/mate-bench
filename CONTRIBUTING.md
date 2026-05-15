@@ -32,12 +32,18 @@ uv run pytest packages/ -m integration
 
 ```
 packages/
-  mate-bench/            Core CLI + plugin interfaces
-  mate-engine-ollama/    Ollama engine plugin
-  mate-runtime-rocm/     AMD ROCm runtime plugin
-  mate-workload-llm/     LLM throughput workload plugin
-worker/                  Cloudflare Worker (submission API)
-schemas/                 JSON Schema for result validation
+  mate-bench/                  Core CLI, plugin interfaces, result schema
+  mate-workload-llm/           LLM token throughput (closed + open mode)
+  mate-workload-stt/           Speech-to-text RTF + WER (LibriSpeech)
+  mate-workload-imagegen/      Image generation throughput (open mode)
+  mate-engine-ollama/          Ollama engine plugin
+  mate-engine-faster-whisper/  faster-whisper engine plugin
+  mate-engine-comfyui/         ComfyUI engine plugin
+  mate-runtime-rocm/           AMD ROCm GPU detection
+  mate-runtime-cuda/           NVIDIA CUDA GPU detection
+worker/                        Cloudflare Worker (submission API)
+schemas/                       JSON Schema for result validation
+scripts/                       Maintenance scripts (testset prep, leaderboard build)
 ```
 
 ---
@@ -63,7 +69,7 @@ from mate_bench.schema import ModelInfo
 class MyEngine:
     name = "my-engine"
     manifest = PluginManifest(requires_mate_bench=">=0.1,<0.2", api_version=1)
-    supported_runtimes = ["cuda", "rocm", "cpu"]
+    supported_runtimes: ClassVar[list[str]] = ["cuda", "rocm", "cpu"]
 
     def is_available(self) -> bool: ...
     def version(self) -> str: ...
@@ -177,7 +183,37 @@ When bumping the schema version, update both validators and add a migration to `
 
 ## Code style
 
-- Python: no formatter enforced, follow existing style (type hints, dataclasses, no comments unless non-obvious)
-- TypeScript: standard strict mode, no formatter enforced
-- Tests: pytest for Python, no JS tests yet
-- Commit messages: imperative mood, no Co-authored-by trailers
+### Python
+
+All packages use **ruff** for linting and formatting (config in root `pyproject.toml`).
+
+```bash
+# Lint (auto-fix where possible)
+uv run --with ruff ruff check packages/ --fix
+
+# Format
+uv run --with ruff ruff format packages/
+
+# Both in one go
+uv run --with ruff ruff check packages/ --fix && uv run --with ruff ruff format packages/
+```
+
+Rules enabled: `E/W` (pycodestyle), `F` (pyflakes), `I` (isort), `UP` (pyupgrade),
+`B` (bugbear), `C4` (comprehensions), `SIM` (simplify), `RUF` (ruff-specific).
+Line length: 100. Target: Python 3.11+.
+
+General style:
+- Type hints on all public functions
+- Dataclasses for structured data
+- No inline comments unless the logic is non-obvious
+- `from __future__ import annotations` at the top of every module
+
+### TypeScript (worker)
+
+- Strict mode, no formatter enforced yet
+- No JS tests yet
+
+### Commits
+
+- Imperative mood ("Add X", "Fix Y", not "Added X")
+- No `Co-authored-by` trailers
