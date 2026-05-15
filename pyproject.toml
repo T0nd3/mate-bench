@@ -37,9 +37,12 @@ known-first-party = [
     "mate_workload_llm",
     "mate_workload_stt",
     "mate_workload_imagegen",
+    "mate_workload_tts",
     "mate_engine_ollama",
     "mate_engine_faster_whisper",
     "mate_engine_comfyui",
+    "mate_engine_kokoro",
+    "mate_engine_piper",
     "mate_runtime_rocm",
     "mate_runtime_cuda",
 ]
@@ -58,3 +61,6 @@ mate-engine-comfyui = { workspace = true }
 mate-workload-llm = { workspace = true }
 mate-workload-stt = { workspace = true }
 mate-workload-imagegen = { workspace = true }
+mate-workload-tts = { workspace = true }
+mate-engine-kokoro = { workspace = true }
+mate-engine-piper = { workspace = true }

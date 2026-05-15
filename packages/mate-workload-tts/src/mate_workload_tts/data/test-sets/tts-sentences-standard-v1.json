@@ -1,0 +1,27 @@
+{
+  "version": "tts-sentences-standard-v1",
+  "license": "CC0-1.0",
+  "source": "Custom CC0 sentence corpus for TTS benchmarking",
+  "sentences": [
+    {"id": "s01", "text": "The quick brown fox jumps over the lazy dog near the riverbank.", "words": 12},
+    {"id": "s02", "text": "She sells seashells by the seashore, and the shells she sells are surely seashells.", "words": 15},
+    {"id": "s03", "text": "How much wood would a woodchuck chuck if a woodchuck could chuck wood all day long?", "words": 17},
+    {"id": "s04", "text": "The weather forecast calls for clear skies and mild temperatures throughout the afternoon.", "words": 13},
+    {"id": "s05", "text": "Peter Piper picked a peck of pickled peppers from the garden patch beside the old stone wall.", "words": 17},
+    {"id": "s06", "text": "A stitch in time saves nine, but a penny saved is a penny earned through careful planning.", "words": 17},
+    {"id": "s07", "text": "The magnificent orchestra performed a breathtaking symphony that moved the entire audience to tears.", "words": 14},
+    {"id": "s08", "text": "Scientists discovered a new species of deep-sea fish living at extraordinary depths in the Pacific Ocean.", "words": 16},
+    {"id": "s09", "text": "The children laughed and played in the golden autumn leaves that covered the park pathway.", "words": 15},
+    {"id": "s10", "text": "Artificial intelligence is transforming industries from healthcare and finance to transportation and education.", "words": 13},
+    {"id": "s11", "text": "The ancient castle stood on a hilltop overlooking the misty valley below, its towers reaching the clouds.", "words": 18},
+    {"id": "s12", "text": "Fresh bread from the bakery filled the whole street with a warm and inviting aroma every morning.", "words": 18},
+    {"id": "s13", "text": "The marathon runner crossed the finish line after four hours of grueling effort through rain and wind.", "words": 17},
+    {"id": "s14", "text": "Quantum computing promises to solve complex problems that would take classical computers millions of years.", "words": 15},
+    {"id": "s15", "text": "The hikers reached the mountain summit just as the sun began to set over the distant horizon.", "words": 17},
+    {"id": "s16", "text": "She carefully arranged the colorful wildflowers in the crystal vase on the kitchen windowsill.", "words": 14},
+    {"id": "s17", "text": "The old lighthouse keeper watched the stormy sea through his brass telescope every evening.", "words": 14},
+    {"id": "s18", "text": "Local volunteers planted over five hundred trees along the riverbank to restore the natural habitat.", "words": 15},
+    {"id": "s19", "text": "The detective examined every clue meticulously before presenting her conclusion to the assembled suspects.", "words": 14},
+    {"id": "s20", "text": "A warm cup of tea and a good book are the perfect companions on a rainy Sunday afternoon.", "words": 18}
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "version": "tts-sentences-quick-v1",
+  "license": "CC0-1.0",
+  "source": "Custom CC0 sentence corpus for TTS benchmarking",
+  "sentences": [
+    {"id": "q01", "text": "The quick brown fox jumps over the lazy dog near the riverbank.", "words": 12},
+    {"id": "q02", "text": "She sells seashells by the seashore, and the shells she sells are surely seashells.", "words": 15},
+    {"id": "q03", "text": "How much wood would a woodchuck chuck if a woodchuck could chuck wood all day long?", "words": 17},
+    {"id": "q04", "text": "The weather forecast calls for clear skies and mild temperatures throughout the afternoon.", "words": 13},
+    {"id": "q05", "text": "Peter Piper picked a peck of pickled peppers from the garden patch beside the old stone wall.", "words": 17}
+  ]
+}
