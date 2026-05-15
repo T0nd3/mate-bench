@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import typer
 import yaml
 from rich.console import Console
 from rich.table import Table
+
+if TYPE_CHECKING:
+    from .schema import Measurement as SchemaMeasurement
 
 from . import __version__
 from .paths import CONFIG_DIR, RESULTS_DIR, TEST_SETS_DIR
@@ -31,25 +34,36 @@ def _load_user_config() -> dict:
 @app.command()
 def run(
     workloads: list[str] = typer.Argument(..., help="Workloads: llm, image, speech"),
-    engine: Optional[str] = typer.Option(None, "--engine", help="Override default engine"),
-    profile: Optional[str] = typer.Option(None, "--profile", help="quick | standard | full (default: from config or 'standard')"),
+    engine: str | None = typer.Option(None, "--engine", help="Override default engine"),
+    profile: str | None = typer.Option(
+        None, "--profile", help="quick | standard | full (default: from config or 'standard')"
+    ),
     mode: str = typer.Option("closed", "--mode", help="closed | open"),
-    model: Optional[str] = typer.Option(None, "--model", help="Model name for open mode (e.g. 'deepseek-r1:14b')"),
+    model: str | None = typer.Option(
+        None, "--model", help="Model name for open mode (e.g. 'deepseek-r1:14b')"
+    ),
     local: bool = typer.Option(False, "--local", help="Only already-installed models"),
     runs: int = typer.Option(5, "--runs", help="Number of measurement runs"),
     warmup_runs: int = typer.Option(1, "--warmup", help="Number of warmup runs"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Show plan without executing"),
-    output: Optional[Path] = typer.Option(None, "--output", help="Save result YAML to file"),
+    output: Path | None = typer.Option(None, "--output", help="Save result YAML to file"),
 ) -> None:
     """Run benchmark for one or more workloads."""
+    from ._preflight import PreflightError, check_engine_available, check_model_pulled, check_vram
+    from ._submitter import get_anonymous_id
+    from ._system import collect_system_info
     from .discovery import get_plugin_versions, load_engines, load_runtimes, load_workloads
     from .plugin import Mode
-    from ._preflight import PreflightError, check_engine_available, check_model_pulled, check_vram
-    from ._system import collect_system_info
-    from ._submitter import get_anonymous_id
     from .schema import (
-        BenchmarkResult, BenchVersions, EngineConfig,
-        Measurement as SchemaMeasurement, ModelInfo, Submitter, SystemInfo, TestSetRef,
+        BenchmarkResult,
+        BenchVersions,
+        EngineConfig,
+        ModelInfo,
+        Submitter,
+        TestSetRef,
+    )
+    from .schema import (
+        Measurement as SchemaMeasurement,
     )
 
     # Resolve profile from config if not explicitly given
@@ -99,7 +113,7 @@ def run(
                 )
                 console.print(
                     f"  {wl_name}/{profile}: models={', '.join(models)}  "
-                    f"~{cfg.estimated_runtime_seconds//60} min  "
+                    f"~{cfg.estimated_runtime_seconds // 60} min  "
                     f"{cfg.vram_required_gb:.1f} GB VRAM"
                 )
         return
@@ -134,8 +148,7 @@ def run(
         if bench_mode == Mode.OPEN:
             if not model:
                 console.print(
-                    f"[red]--model is required for open mode "
-                    f"(e.g. --model deepseek-r1:14b)[/red]"
+                    "[red]--model is required for open mode (e.g. --model deepseek-r1:14b)[/red]"
                 )
                 raise typer.Exit(1)
             required = [model]
@@ -149,9 +162,7 @@ def run(
         # Model check / pull for each required model
         for model_name in required:
             try:
-                model_available = check_model_pulled(
-                    selected_engine, model_name, local_only=local
-                )
+                model_available = check_model_pulled(selected_engine, model_name, local_only=local)
             except PreflightError as e:
                 console.print(f"[red]{e}[/red]")
                 raise typer.Exit(1)
@@ -206,9 +217,7 @@ def run(
         if hasattr(selected_engine, "model_info"):
             model_info = selected_engine.model_info(primary_model)
         else:
-            model_info = ModelInfo(
-                name=primary_model, source="local", source_ref=primary_model
-            )
+            model_info = ModelInfo(name=primary_model, source="local", source_ref=primary_model)
 
         # Test set hash
         ts_hash = "unknown"
@@ -266,12 +275,13 @@ def run(
         table.add_row("Saved to", str(out_path))
         console.print(table)
 
-    console.print(f"\n[green]Done.[/green] Run [bold]mate submit {result_files[0]}[/bold] to share.")
+    console.print(
+        f"\n[green]Done.[/green] Run [bold]mate submit {result_files[0]}[/bold] to share."
+    )
 
 
 def _add_tps_rows(table: Table, measurement: SchemaMeasurement) -> None:
     """Add tokens/s rows to a summary table, handling both flat and per-model median dicts."""
-    from .schema import Measurement as SchemaMeasurement  # local import avoids circular
 
     flat_tps = measurement.median.get("tokens_per_second")
     if flat_tps is not None:
@@ -286,7 +296,7 @@ def _add_tps_rows(table: Table, measurement: SchemaMeasurement) -> None:
 
 @app.command()
 def submit(
-    result_file: Optional[Path] = typer.Argument(None, help="Result YAML to submit (default: latest)"),
+    result_file: Path | None = typer.Argument(None, help="Result YAML to submit (default: latest)"),
     discord: bool = typer.Option(False, "--discord", help="Show YAML for Discord submission"),
     print_yaml: bool = typer.Option(False, "--print", help="Print YAML to stdout"),
 ) -> None:
@@ -300,7 +310,9 @@ def submit(
             raise typer.Exit(1)
         yamls = sorted(RESULTS_DIR.glob("*.yaml"), key=lambda p: p.stat().st_mtime, reverse=True)
         if not yamls:
-            console.print("[red]No result files found in results directory. Run a benchmark first.[/red]")
+            console.print(
+                "[red]No result files found in results directory. Run a benchmark first.[/red]"
+            )
             raise typer.Exit(1)
         result_file = yamls[0]
         console.print(f"Using latest result: [bold]{result_file.name}[/bold]")
@@ -318,6 +330,7 @@ def submit(
         raise typer.Exit(1)
 
     from .schema import _load_json_schema
+
     try:
         schema = _load_json_schema(data.get("schema_version", 1))
         jsonschema.validate(data, schema)
@@ -359,7 +372,9 @@ def submit(
             console.print(f"[green]OK[/green] Submitted — ID: [bold]{body['id']}[/bold]")
         else:
             body = response.json()
-            console.print(f"[red]Submission failed ({response.status_code}): {body.get('error')}[/red]")
+            console.print(
+                f"[red]Submission failed ({response.status_code}): {body.get('error')}[/red]"
+            )
             raise typer.Exit(1)
     except httpx.RequestError as e:
         console.print(f"[red]Network error: {e}[/red]")
@@ -368,7 +383,7 @@ def submit(
 
 @app.command()
 def cleanup(
-    workload: Optional[str] = typer.Argument(None, help="Workload to clean (default: all)"),
+    workload: str | None = typer.Argument(None, help="Workload to clean (default: all)"),
 ) -> None:
     """Remove cached test sets."""
     from .discovery import load_workloads
@@ -421,7 +436,9 @@ def config() -> None:
     """Interactive configuration (default profile, default engine)."""
     existing = _load_user_config()
 
-    console.print(f"[bold]mate-bench configuration[/bold]  [dim]{CONFIG_DIR / 'config.yaml'}[/dim]\n")
+    console.print(
+        f"[bold]mate-bench configuration[/bold]  [dim]{CONFIG_DIR / 'config.yaml'}[/dim]\n"
+    )
 
     default_profile = typer.prompt(
         "Default profile",
@@ -456,7 +473,7 @@ def list_engines() -> None:
                 models = plugin.list_models()
                 if models:
                     names = ", ".join(m.get("name", "?") for m in models[:5])
-                    suffix = f"  [dim]+{len(models)-5} more[/dim]" if len(models) > 5 else ""
+                    suffix = f"  [dim]+{len(models) - 5} more[/dim]" if len(models) > 5 else ""
                     console.print(f"  models:  {names}{suffix}")
                 else:
                     console.print("  models:  [dim]none pulled yet[/dim]")
@@ -507,7 +524,9 @@ def list_runtimes() -> None:
                 console.print(f"  ROCm:   {info.get('runtime')}")
                 console.print(f"  Driver: {info.get('driver')}")
                 if not info.get("_gpu_name_known", True):
-                    console.print("  [yellow]WARN: Unknown chip -- name not normalized, flagged for review[/yellow]")
+                    console.print(
+                        "  [yellow]WARN: Unknown chip -- name not normalized, flagged for review[/yellow]"
+                    )
             except Exception as e:
                 console.print(f"  [red]gpu_info() failed: {e}[/red]")
     if not plugins:
@@ -521,7 +540,11 @@ def list_test_sets() -> None:
         console.print("[dim]No test sets cached.[/dim]")
         return
     for path in sorted(TEST_SETS_DIR.iterdir()):
-        size = sum(f.stat().st_size for f in path.rglob("*") if f.is_file()) if path.is_dir() else path.stat().st_size
+        size = (
+            sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
+            if path.is_dir()
+            else path.stat().st_size
+        )
         console.print(f"  {path.name}  [dim]{size // 1024 // 1024} MB[/dim]")
 
 

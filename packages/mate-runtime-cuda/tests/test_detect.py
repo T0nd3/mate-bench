@@ -17,8 +17,8 @@ from .fixtures import (
     SMI_UNKNOWN,
 )
 
-
 # ── is_cuda_available ─────────────────────────────────────────────────────────
+
 
 class TestIsCudaAvailable:
     def test_available_when_smi_returns_output(self):
@@ -31,6 +31,7 @@ class TestIsCudaAvailable:
 
 
 # ── _query_smi ────────────────────────────────────────────────────────────────
+
 
 class TestQuerySmi:
     def test_parses_rtx4090_row(self):
@@ -45,6 +46,7 @@ class TestQuerySmi:
 
 
 # ── query_gpu ─────────────────────────────────────────────────────────────────
+
 
 class TestQueryGpu:
     def test_rtx4090(self):
@@ -78,40 +80,51 @@ class TestQueryGpu:
         assert info.name == "SomeUnknownGPU"
 
     def test_no_gpu_raises(self):
-        with patch("mate_runtime_cuda._detect._run", return_value=SMI_EMPTY):
-            with pytest.raises(RuntimeError, match="No NVIDIA GPU found"):
-                query_gpu(0)
+        with (
+            patch("mate_runtime_cuda._detect._run", return_value=SMI_EMPTY),
+            pytest.raises(RuntimeError, match="No NVIDIA GPU found"),
+        ):
+            query_gpu(0)
 
     def test_index_out_of_range_raises(self):
-        with patch("mate_runtime_cuda._detect._run", return_value=SMI_RTX4090):
-            with pytest.raises(IndexError):
-                query_gpu(1)
+        with (
+            patch("mate_runtime_cuda._detect._run", return_value=SMI_RTX4090),
+            pytest.raises(IndexError),
+        ):
+            query_gpu(1)
 
 
 # ── normalize & chip_from_name ────────────────────────────────────────────────
 
+
 class TestNormalize:
-    @pytest.mark.parametrize("raw, expected_name", [
-        ("NVIDIA GeForce RTX 4090",      "RTX 4090"),
-        ("NVIDIA GeForce RTX 3080",      "RTX 3080"),
-        ("NVIDIA A100-SXM4-80GB",        "A100-SXM4-80GB"),
-        ("NVIDIA GeForce GTX 1080 Ti",   "GTX 1080 Ti"),
-        ("NVIDIA GeForce RTX 2080 Ti",   "RTX 2080 Ti"),
-    ])
+    @pytest.mark.parametrize(
+        "raw, expected_name",
+        [
+            ("NVIDIA GeForce RTX 4090", "RTX 4090"),
+            ("NVIDIA GeForce RTX 3080", "RTX 3080"),
+            ("NVIDIA A100-SXM4-80GB", "A100-SXM4-80GB"),
+            ("NVIDIA GeForce GTX 1080 Ti", "GTX 1080 Ti"),
+            ("NVIDIA GeForce RTX 2080 Ti", "RTX 2080 Ti"),
+        ],
+    )
     def test_strips_prefix(self, raw, expected_name):
         name, _ = normalize(raw)
         assert name == expected_name
 
-    @pytest.mark.parametrize("raw, expected_chip", [
-        ("NVIDIA GeForce RTX 4090",    "AD102"),
-        ("NVIDIA GeForce RTX 3090",    "GA102"),
-        ("NVIDIA GeForce RTX 3080",    "GA102"),
-        ("NVIDIA GeForce RTX 3070",    "GA104"),
-        ("NVIDIA GeForce RTX 2080 Ti", "TU102"),
-        ("NVIDIA GeForce GTX 1080 Ti", "GP102"),
-        ("NVIDIA H100",                "GH100"),
-        ("NVIDIA A100-SXM4-80GB",      "GA100"),
-    ])
+    @pytest.mark.parametrize(
+        "raw, expected_chip",
+        [
+            ("NVIDIA GeForce RTX 4090", "AD102"),
+            ("NVIDIA GeForce RTX 3090", "GA102"),
+            ("NVIDIA GeForce RTX 3080", "GA102"),
+            ("NVIDIA GeForce RTX 3070", "GA104"),
+            ("NVIDIA GeForce RTX 2080 Ti", "TU102"),
+            ("NVIDIA GeForce GTX 1080 Ti", "GP102"),
+            ("NVIDIA H100", "GH100"),
+            ("NVIDIA A100-SXM4-80GB", "GA100"),
+        ],
+    )
     def test_known_chips(self, raw, expected_chip):
         name, _ = normalize(raw)
         chip, known = chip_from_name(name)

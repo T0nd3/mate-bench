@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from mate_bench.plugin import PluginManifest
 from mate_bench.schema import ModelInfo
@@ -12,7 +12,7 @@ from ._models import model_info_from_ollama
 class OllamaEngine:
     name = "ollama"
     manifest = PluginManifest(requires_mate_bench=">=0.1,<0.2", api_version=1)
-    supported_runtimes = ["rocm", "cuda", "cpu"]
+    supported_runtimes: ClassVar[list[str]] = ["rocm", "cuda", "cpu"]
 
     def __init__(self, base_url: str = "http://localhost:11434") -> None:
         self._client = OllamaClient(base_url)

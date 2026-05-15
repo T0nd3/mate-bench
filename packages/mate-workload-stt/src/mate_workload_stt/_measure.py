@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import statistics
-import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
@@ -43,7 +42,7 @@ def corpus_wer(references: list[str], hypotheses: list[str]) -> float:
     """Word Error Rate over a corpus (lower is better)."""
     total_errors = 0
     total_words = 0
-    for ref, hyp in zip(references, hypotheses):
+    for ref, hyp in zip(references, hypotheses, strict=False):
         r = ref.upper().split()
         h = hyp.upper().split()
         total_errors += _word_edit_distance(r, h)

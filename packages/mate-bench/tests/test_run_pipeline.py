@@ -6,17 +6,18 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
+from mate_bench._system import collect_system_info
 from mate_bench.schema import (
     BenchmarkResult,
     BenchVersions,
     EngineConfig,
-    Measurement as SchemaMeasurement,
     ModelInfo,
     Submitter,
-    SystemInfo,
     TestSetRef,
 )
-from mate_bench._system import collect_system_info
+from mate_bench.schema import (
+    Measurement as SchemaMeasurement,
+)
 
 
 def _make_engine(tps: float = 100.0) -> MagicMock:
@@ -44,8 +45,8 @@ def _make_engine(tps: float = 100.0) -> MagicMock:
 
 class TestRunPipeline:
     def test_full_pipeline_produces_valid_yaml(self, tmp_path):
-        from mate_workload_llm import LlmWorkload
         from mate_bench.plugin import Mode
+        from mate_workload_llm import LlmWorkload
 
         workload = LlmWorkload()
         engine = _make_engine(tps=150.0)
@@ -81,8 +82,8 @@ class TestRunPipeline:
         assert data["integrity"]["hash"].startswith("sha256:")
 
     def test_integrity_hash_changes_when_tps_changes(self, tmp_path):
-        from mate_workload_llm import LlmWorkload
         from mate_bench.plugin import Mode
+        from mate_workload_llm import LlmWorkload
 
         def _build(tps):
             workload = LlmWorkload()
@@ -91,7 +92,10 @@ class TestRunPipeline:
                 plugin_m = workload.run("quick", Mode.CLOSED, engine, runs=1, warmup_runs=0)
             m = SchemaMeasurement(**asdict(plugin_m))
             r = BenchmarkResult.new(
-                mode="closed", workload="llm", engine="ollama", engine_version="0.1",
+                mode="closed",
+                workload="llm",
+                engine="ollama",
+                engine_version="0.1",
                 model=ModelInfo(name="x", source="ollama", source_ref="x"),
                 profile="quick",
                 test_set=TestSetRef(hash="sha256:" + "d" * 64),
@@ -110,6 +114,7 @@ class TestRunPipeline:
 
     def test_bench_plugin_versions_populated(self, tmp_path):
         from mate_bench.discovery import get_plugin_versions
+
         versions = get_plugin_versions()
         assert isinstance(versions, dict)
         assert "llm" in versions or "ollama" in versions or len(versions) >= 0

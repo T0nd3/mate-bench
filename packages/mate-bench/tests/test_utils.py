@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from mate_bench._utils import sha256_file
 
 
 class TestSha256File:
     def test_known_content(self, tmp_path):
         import hashlib
+
         content = b"hello mate-bench"
         f = tmp_path / "test.bin"
         f.write_bytes(content)
@@ -16,6 +15,7 @@ class TestSha256File:
 
     def test_empty_file(self, tmp_path):
         import hashlib
+
         f = tmp_path / "empty.bin"
         f.write_bytes(b"")
         expected = "sha256:" + hashlib.sha256(b"").hexdigest()

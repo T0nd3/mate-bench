@@ -8,8 +8,8 @@ import pytest
 from mate_engine_faster_whisper import FasterWhisperEngine
 from mate_engine_faster_whisper._transcribe import TranscribeResult, transcribe
 
-
 # ── TranscribeResult ──────────────────────────────────────────────────────────
+
 
 class TestTranscribeResult:
     def test_rtf_computed(self):
@@ -22,6 +22,7 @@ class TestTranscribeResult:
 
 
 # ── transcribe() ──────────────────────────────────────────────────────────────
+
 
 def _mock_model(text: str = "hello world", duration: float = 5.0) -> MagicMock:
     seg = MagicMock()
@@ -50,9 +51,12 @@ class TestTranscribeFn:
         assert result.processing_time_s >= 0.0
 
     def test_multi_segment_joined(self):
-        seg1 = MagicMock(); seg1.text = " Hello"
-        seg2 = MagicMock(); seg2.text = " world"
-        info = MagicMock(); info.duration = 3.0
+        seg1 = MagicMock()
+        seg1.text = " Hello"
+        seg2 = MagicMock()
+        seg2.text = " world"
+        info = MagicMock()
+        info.duration = 3.0
         model = MagicMock()
         model.transcribe.return_value = ([seg1, seg2], info)
         result = transcribe(model, Path("/audio.flac"))
@@ -60,6 +64,7 @@ class TestTranscribeFn:
 
 
 # ── FasterWhisperEngine ───────────────────────────────────────────────────────
+
 
 class TestFasterWhisperEngine:
     def test_is_available_true_when_importable(self):
@@ -73,10 +78,12 @@ class TestFasterWhisperEngine:
         mock_model = _mock_model()
         mock_cls.return_value = mock_model
 
-        with patch("faster_whisper.WhisperModel", mock_cls):
-            with patch("mate_engine_faster_whisper._transcribe.transcribe", return_value=MagicMock()):
-                engine._load_model("large-v3")
-                engine._load_model("large-v3")
+        with (
+            patch("faster_whisper.WhisperModel", mock_cls),
+            patch("mate_engine_faster_whisper._transcribe.transcribe", return_value=MagicMock()),
+        ):
+            engine._load_model("large-v3")
+            engine._load_model("large-v3")
 
         mock_cls.assert_called_once()
 

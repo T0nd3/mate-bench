@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from mate_workload_llm import LlmWorkload
 from mate_bench.plugin import Mode
+from mate_workload_llm import LlmWorkload
 
 
 class TestLlmWorkloadMeta:
@@ -83,9 +82,11 @@ class TestRun:
     def test_run_open_mode_without_setup_raises(self, tmp_path):
         w = LlmWorkload()
         engine = self._make_engine()
-        with patch("mate_workload_llm.TEST_SETS_DIR", tmp_path):
-            with pytest.raises(RuntimeError, match="setup_open"):
-                w.run("quick", Mode.OPEN, engine, runs=1, warmup_runs=0)
+        with (
+            patch("mate_workload_llm.TEST_SETS_DIR", tmp_path),
+            pytest.raises(RuntimeError, match="setup_open"),
+        ):
+            w.run("quick", Mode.OPEN, engine, runs=1, warmup_runs=0)
 
     def test_run_open_mode_uses_user_model(self, tmp_path):
         w = LlmWorkload()
@@ -127,6 +128,7 @@ class TestLlmWorkloadIntegration:
 
     def test_quick_profile_runs(self, tmp_path):
         from mate_engine_ollama import OllamaEngine
+
         w = LlmWorkload()
         engine = OllamaEngine()
         assert engine.is_available(), "Ollama must be running for integration tests"

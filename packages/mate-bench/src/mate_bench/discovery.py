@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from importlib.metadata import entry_points
+
 from packaging.specifiers import SpecifierSet
 
 _PLUGIN_GROUPS = [
@@ -18,8 +19,9 @@ def get_plugin_versions() -> dict[str, str]:
                 versions[ep.name] = ep.dist.version
     return versions
 
-from . import __version__
-from .plugin import EnginePlugin, RuntimePlugin, WorkloadPlugin, PluginManifest
+
+from . import __version__  # noqa: E402
+from .plugin import EnginePlugin, PluginManifest, RuntimePlugin, WorkloadPlugin  # noqa: E402
 
 
 def _check_compatibility(manifest: PluginManifest, plugin_name: str) -> None:

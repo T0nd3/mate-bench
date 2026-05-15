@@ -7,7 +7,7 @@ from mate_bench.plugin import ProfileConfig, TestSetSpec
 _DATA_DIR = Path(__file__).parent / "data" / "test-sets"
 
 BUNDLED_TEST_SETS: dict[str, Path] = {
-    "imagegen-512-v1":  _DATA_DIR / "imagegen-512-v1.json",
+    "imagegen-512-v1": _DATA_DIR / "imagegen-512-v1.json",
     "imagegen-1024-v1": _DATA_DIR / "imagegen-1024-v1.json",
 }
 

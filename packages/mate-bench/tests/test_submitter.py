@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 import uuid
 from unittest.mock import patch
 
@@ -28,8 +27,8 @@ class TestGetAnonymousId:
             result = get_anonymous_id()
         try:
             uuid.UUID(result)
-        except ValueError:
-            raise AssertionError(f"Not a valid UUID: {result!r}")
+        except ValueError as exc:
+            raise AssertionError(f"Not a valid UUID: {result!r}") from exc
 
     def test_uses_existing_id_if_file_present(self, tmp_path):
         id_file = tmp_path / "submitter_id.txt"

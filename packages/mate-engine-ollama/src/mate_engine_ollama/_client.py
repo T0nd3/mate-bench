@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 import httpx
 
@@ -75,20 +76,23 @@ class OllamaClient:
         on_progress: Callable[[str, float | None], None] | None = None,
     ) -> None:
         """Pull a model, calling on_progress(status, percent) as it downloads."""
-        with httpx.Client(timeout=None) as client:
-            with client.stream("POST", f"{self._base}/api/pull", json={"name": name}) as resp:
-                resp.raise_for_status()
-                for line in resp.iter_lines():
-                    if not line:
-                        continue
-                    import json
-                    chunk = json.loads(line)
-                    status = chunk.get("status", "")
-                    total = chunk.get("total")
-                    completed = chunk.get("completed")
-                    percent = (completed / total * 100) if total and completed else None
-                    if on_progress:
-                        on_progress(status, percent)
+        with (
+            httpx.Client(timeout=None) as client,
+            client.stream("POST", f"{self._base}/api/pull", json={"name": name}) as resp,
+        ):
+            resp.raise_for_status()
+            for line in resp.iter_lines():
+                if not line:
+                    continue
+                import json
+
+                chunk = json.loads(line)
+                status = chunk.get("status", "")
+                total = chunk.get("total")
+                completed = chunk.get("completed")
+                percent = (completed / total * 100) if total and completed else None
+                if on_progress:
+                    on_progress(status, percent)
 
     def generate(
         self,

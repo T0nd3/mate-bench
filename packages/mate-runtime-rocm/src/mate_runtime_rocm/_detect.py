@@ -10,13 +10,13 @@ from ._names import CHIP_NAMES, normalize
 
 @dataclass
 class GpuInfo:
-    chip: str           # e.g. "gfx1100"
-    name: str           # normalized, e.g. "RX 7900 XTX"
-    name_raw: str       # as reported by rocminfo, e.g. "AMD Radeon RX 7900 XTX"
-    name_known: bool    # False → unknown chip, stored raw + flagged for review
+    chip: str  # e.g. "gfx1100"
+    name: str  # normalized, e.g. "RX 7900 XTX"
+    name_raw: str  # as reported by rocminfo, e.g. "AMD Radeon RX 7900 XTX"
+    name_known: bool  # False → unknown chip, stored raw + flagged for review
     vram_gb: float
-    rocm_version: str   # e.g. "rocm-6.3.1"
-    driver_version: str # e.g. "6.7.0"
+    rocm_version: str  # e.g. "rocm-6.3.1"
+    driver_version: str  # e.g. "6.7.0"
 
 
 def is_rocm_available() -> bool:
@@ -64,6 +64,7 @@ def query_gpu(index: int = 0) -> GpuInfo:
 
 
 # ── internal helpers ──────────────────────────────────────────────────────────
+
 
 def _run(cmd: list[str], timeout: int = 10) -> str:
     try:
@@ -126,7 +127,7 @@ def _rocm_version() -> str:
     for path in (Path("/opt/rocm/.info/version"), Path("/opt/rocm/.info/version-utils")):
         if path.exists():
             raw = path.read_text().strip().split("\n")[0]
-            version = raw.split("-")[0]   # "6.3.1-45" → "6.3.1"
+            version = raw.split("-")[0]  # "6.3.1-45" → "6.3.1"
             return f"rocm-{version}"
 
     # Fall back to rocm-smi --version

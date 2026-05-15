@@ -28,7 +28,7 @@ requires_mate_bench = ">=0.1,<0.2"
 api_version = 1
 
 [dependency-groups]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "ruff>=0.4"]
 
 [tool.pytest.ini_options]
 markers = ["integration: requires an NVIDIA GPU with CUDA drivers"]

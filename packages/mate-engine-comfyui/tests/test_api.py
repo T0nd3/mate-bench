@@ -7,19 +7,23 @@ import pytest
 from mate_engine_comfyui._api import ComfyUiClient
 from mate_engine_comfyui._workflow import txt2img_workflow
 
-
 # ── txt2img_workflow ──────────────────────────────────────────────────────────
+
 
 class TestTxt2ImgWorkflow:
     def test_contains_required_nodes(self):
-        wf = txt2img_workflow("model.safetensors", "a cat", "", 20, 512, 512, 7.0, "euler_ancestral")
+        wf = txt2img_workflow(
+            "model.safetensors", "a cat", "", 20, 512, 512, 7.0, "euler_ancestral"
+        )
         assert "3" in wf  # KSampler
         assert "4" in wf  # CheckpointLoaderSimple
         assert "5" in wf  # EmptyLatentImage
         assert "9" in wf  # SaveImage
 
     def test_model_name_set(self):
-        wf = txt2img_workflow("my_model.safetensors", "a cat", "", 20, 512, 512, 7.0, "euler_ancestral")
+        wf = txt2img_workflow(
+            "my_model.safetensors", "a cat", "", 20, 512, 512, 7.0, "euler_ancestral"
+        )
         assert wf["4"]["inputs"]["ckpt_name"] == "my_model.safetensors"
 
     def test_resolution_set(self):
@@ -42,6 +46,7 @@ class TestTxt2ImgWorkflow:
 
 
 # ── ComfyUiClient ─────────────────────────────────────────────────────────────
+
 
 def _mock_response(json_data: dict, status_code: int = 200) -> MagicMock:
     r = MagicMock()
@@ -73,23 +78,27 @@ class TestComfyUiClient:
     def test_run_workflow_returns_image_result(self):
         client = ComfyUiClient()
         prompt_resp = _mock_response({"prompt_id": "xyz-456"})
-        history_resp = _mock_response({
-            "xyz-456": {
-                "status": {"completed": True, "status_str": "success"},
-                "outputs": {"9": {"images": [{"filename": "mate_bench_00001_.png"}]}},
+        history_resp = _mock_response(
+            {
+                "xyz-456": {
+                    "status": {"completed": True, "status_str": "success"},
+                    "outputs": {"9": {"images": [{"filename": "mate_bench_00001_.png"}]}},
+                }
             }
-        })
-        with patch("mate_engine_comfyui._api.requests.post", return_value=prompt_resp):
-            with patch("mate_engine_comfyui._api.requests.get", return_value=history_resp):
-                result = client.run_workflow({"3": {}})
+        )
+        with (
+            patch("mate_engine_comfyui._api.requests.post", return_value=prompt_resp),
+            patch("mate_engine_comfyui._api.requests.get", return_value=history_resp),
+        ):
+            result = client.run_workflow({"3": {}})
         assert result.generation_time_s >= 0.0
         assert "mate_bench_00001_.png" in result.filenames
 
     def test_wait_raises_on_error_status(self):
         client = ComfyUiClient()
         with patch("mate_engine_comfyui._api.requests.get") as mock_get:
-            mock_get.return_value = _mock_response({
-                "fail-id": {"status": {"completed": False, "status_str": "error"}}
-            })
+            mock_get.return_value = _mock_response(
+                {"fail-id": {"status": {"completed": False, "status_str": "error"}}}
+            )
             with pytest.raises(RuntimeError, match="error"):
                 client.wait_for_completion("fail-id")

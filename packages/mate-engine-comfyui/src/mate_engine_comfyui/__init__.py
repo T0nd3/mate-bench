@@ -3,7 +3,10 @@
 Connects to a running ComfyUI server via its REST API and submits
 txt2img workflows, measuring wall-clock generation time per image.
 """
+
 from __future__ import annotations
+
+from typing import ClassVar
 
 from mate_bench.plugin import PluginManifest
 
@@ -16,7 +19,7 @@ __all__ = ["ComfyUiEngine", "ImageResult"]
 class ComfyUiEngine:
     name = "comfyui"
     manifest = PluginManifest(requires_mate_bench=">=0.1,<0.2", api_version=1)
-    supported_runtimes = ["cuda", "rocm", "cpu", "mps"]
+    supported_runtimes: ClassVar[list[str]] = ["cuda", "rocm", "cpu", "mps"]
 
     def __init__(self, host: str = "127.0.0.1", port: int = 8188, timeout: float = 600.0) -> None:
         self._client = ComfyUiClient(host=host, port=port, timeout=timeout)

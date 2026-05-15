@@ -3,10 +3,10 @@
 Measures txt2img throughput (images/s, steps/s) across a fixed prompt
 suite.  Closed mode is intentionally unsupported — see ImageGenWorkload.
 """
+
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any
 
 from mate_bench.plugin import (

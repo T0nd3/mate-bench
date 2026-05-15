@@ -16,7 +16,7 @@ def _sha256_file(path: Path) -> str:
 
 def _download(url: str, dst: Path) -> None:
     dst.parent.mkdir(parents=True, exist_ok=True)
-    with urllib.request.urlopen(url) as resp, dst.open("wb") as f:  # noqa: S310
+    with urllib.request.urlopen(url) as resp, dst.open("wb") as f:
         while chunk := resp.read(65536):
             f.write(chunk)
 
@@ -49,6 +49,8 @@ def fetch_clips(manifest: dict, clips_dir: Path) -> dict[str, Path]:
         actual = _sha256_file(dst)
         if actual != clip["sha256"]:
             dst.unlink()
-            raise ValueError(f"Clip {clip_id} hash mismatch: expected {clip['sha256']}, got {actual}")
+            raise ValueError(
+                f"Clip {clip_id} hash mismatch: expected {clip['sha256']}, got {actual}"
+            )
         result[clip_id] = dst
     return result

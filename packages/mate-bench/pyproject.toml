@@ -31,7 +31,7 @@ Changelog = "https://github.com/T0nd3/mate-bench/releases"
 mate = "mate_bench.cli:app"
 
 [dependency-groups]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "ruff>=0.4"]
 
 [tool.pytest.ini_options]
 markers = ["integration: requires a running Ollama server"]

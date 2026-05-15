@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Protocol, runtime_checkable
 
 
-class Mode(str, Enum):
+class Mode(StrEnum):
     CLOSED = "closed"
     OPEN = "open"
 

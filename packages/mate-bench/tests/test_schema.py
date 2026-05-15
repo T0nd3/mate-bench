@@ -8,7 +8,6 @@ from mate_bench.schema import (
     BenchmarkResult,
     BenchVersions,
     EngineConfig,
-    Integrity,
     Measurement,
     ModelInfo,
     Submitter,
@@ -21,30 +20,36 @@ _FAKE_HASH = "sha256:" + "a" * 64
 
 
 def _make_result(**overrides) -> BenchmarkResult:
-    defaults = dict(
-        mode="closed",
-        workload="llm",
-        engine="ollama",
-        engine_version="0.23.4",
-        model=ModelInfo(name="test", source="ollama", source_ref="test:latest"),
-        profile="quick",
-        test_set=TestSetRef(hash=_FAKE_HASH, id="llm-short-v1"),
-        engine_config=EngineConfig(is_reference=True),
-        system=SystemInfo(
-            gpu_vendor="cpu", gpu_name="unknown", gpu_chip="unknown",
-            vram_gb=0.0, runtime="cpu", driver="unknown",
-            os="Linux", kernel="6.7.0",
+    defaults = {
+        "mode": "closed",
+        "workload": "llm",
+        "engine": "ollama",
+        "engine_version": "0.23.4",
+        "model": ModelInfo(name="test", source="ollama", source_ref="test:latest"),
+        "profile": "quick",
+        "test_set": TestSetRef(hash=_FAKE_HASH, id="llm-short-v1"),
+        "engine_config": EngineConfig(is_reference=True),
+        "system": SystemInfo(
+            gpu_vendor="cpu",
+            gpu_name="unknown",
+            gpu_chip="unknown",
+            vram_gb=0.0,
+            runtime="cpu",
+            driver="unknown",
+            os="Linux",
+            kernel="6.7.0",
         ),
-        bench=BenchVersions(core_version="0.1.0"),
-        measurement=Measurement(
-            runs=2, warmup_runs=1,
+        "bench": BenchVersions(core_version="0.1.0"),
+        "measurement": Measurement(
+            runs=2,
+            warmup_runs=1,
             median={"tokens_per_second": 100.0},
             std_dev={"tokens_per_second": 0.5},
             vram_peak_gb=0.0,
             throttling_detected=False,
         ),
-        submitter=Submitter(anonymous_id="test-uuid"),
-    )
+        "submitter": Submitter(anonymous_id="test-uuid"),
+    }
     defaults.update(overrides)
     return BenchmarkResult.new(**defaults)
 
@@ -84,7 +89,8 @@ class TestComputeIntegrity:
         r1 = _make_result()
         r2 = _make_result(
             measurement=Measurement(
-                runs=3, warmup_runs=1,
+                runs=3,
+                warmup_runs=1,
                 median={"tokens_per_second": 200.0},
                 std_dev={"tokens_per_second": 1.0},
                 vram_peak_gb=0.0,
@@ -104,6 +110,7 @@ class TestValidate:
 
     def test_invalid_mode_fails(self):
         import jsonschema
+
         result = _make_result()
         result.mode = "invalid"
         result.compute_integrity()
@@ -112,10 +119,17 @@ class TestValidate:
 
     def test_invalid_gpu_vendor_fails(self):
         import jsonschema
+
         result = _make_result(
             system=SystemInfo(
-                gpu_vendor="unknown-vendor", gpu_name="X", gpu_chip="X",
-                vram_gb=0.0, runtime="cpu", driver="x", os="Linux", kernel="6.7.0",
+                gpu_vendor="unknown-vendor",
+                gpu_name="X",
+                gpu_chip="X",
+                vram_gb=0.0,
+                runtime="cpu",
+                driver="x",
+                os="Linux",
+                kernel="6.7.0",
             )
         )
         result.compute_integrity()
@@ -126,16 +140,16 @@ class TestValidate:
 class TestToYaml:
     def test_yaml_contains_schema_version(self):
         import yaml
+
         result = _make_result().compute_integrity()
         data = yaml.safe_load(result.to_yaml())
         assert data["schema_version"] == 1
 
     def test_engine_config_settings_flattened(self):
         import yaml
+
         result = _make_result(
-            engine_config=EngineConfig(
-                is_reference=True, settings={"model": "llama3.2:latest"}
-            )
+            engine_config=EngineConfig(is_reference=True, settings={"model": "llama3.2:latest"})
         )
         result.compute_integrity()
         data = yaml.safe_load(result.to_yaml())
@@ -144,6 +158,7 @@ class TestToYaml:
 
     def test_integrity_hash_in_yaml(self):
         import yaml
+
         result = _make_result().compute_integrity()
         data = yaml.safe_load(result.to_yaml())
         assert "integrity" in data

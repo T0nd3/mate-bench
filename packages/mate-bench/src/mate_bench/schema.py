@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
@@ -119,7 +119,7 @@ class BenchmarkResult:
     ) -> BenchmarkResult:
         return cls(
             schema_version=SCHEMA_VERSION,
-            submitted_at=datetime.now(timezone.utc).isoformat(),
+            submitted_at=datetime.now(UTC).isoformat(),
             mode=mode,
             workload=workload,
             engine=engine,

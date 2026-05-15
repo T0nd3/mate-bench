@@ -7,7 +7,6 @@ import pytest
 
 from mate_engine_ollama._client import GenerateResult, OllamaClient
 
-
 VERSION_RESPONSE = {"version": "0.23.4"}
 
 TAGS_RESPONSE = {
@@ -115,14 +114,19 @@ class TestOllamaClientUnit:
 class TestModelInfo:
     def test_digest_used_as_file_hash(self):
         from mate_engine_ollama._models import model_info_from_ollama
+
         info = model_info_from_ollama("llama3.2:3b", TAGS_RESPONSE["models"])
         assert info.source == "ollama"
         assert info.source_ref == "llama3.2:3b"
-        assert info.file_hash == "sha256:a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72"
+        assert (
+            info.file_hash
+            == "sha256:a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72"
+        )
         assert info.file_hash_available is True
 
     def test_unknown_model_no_hash(self):
         from mate_engine_ollama._models import model_info_from_ollama
+
         info = model_info_from_ollama("unknown:latest", TAGS_RESPONSE["models"])
         assert info.file_hash is None
         assert info.file_hash_available is False

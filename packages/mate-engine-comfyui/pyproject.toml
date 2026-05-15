@@ -26,7 +26,7 @@ Repository = "https://github.com/T0nd3/mate-bench"
 comfyui = "mate_engine_comfyui:ComfyUiEngine"
 
 [dependency-groups]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "ruff>=0.4"]
 
 [build-system]
 requires = ["hatchling"]

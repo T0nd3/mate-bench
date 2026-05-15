@@ -3,6 +3,7 @@
 Benchmarks STT transcription speed (RTF) and accuracy (WER) using
 LibriSpeech test-clean audio clips with a faster-whisper backend.
 """
+
 from __future__ import annotations
 
 import json

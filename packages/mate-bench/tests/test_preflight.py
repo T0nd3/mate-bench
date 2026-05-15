@@ -4,7 +4,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from mate_bench._preflight import PreflightError, check_engine_available, check_model_pulled, check_vram
+from mate_bench._preflight import (
+    PreflightError,
+    check_engine_available,
+    check_model_pulled,
+    check_vram,
+)
 
 
 def _engine(available: bool, models: list[str] | None = None) -> MagicMock:
@@ -54,6 +59,7 @@ class TestCheckVram:
     def test_warning_when_insufficient(self, capsys):
         from io import StringIO
         from unittest.mock import patch
+
         from rich.console import Console
 
         output = StringIO()

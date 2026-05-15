@@ -9,13 +9,13 @@ from ._names import chip_from_name, normalize
 
 @dataclass
 class GpuInfo:
-    chip: str           # die codename, e.g. "AD102"
-    name: str           # normalized, e.g. "RTX 4090"
-    name_raw: str       # as reported by nvidia-smi, e.g. "NVIDIA GeForce RTX 4090"
-    name_known: bool    # False → unknown model, stored raw + flagged
+    chip: str  # die codename, e.g. "AD102"
+    name: str  # normalized, e.g. "RTX 4090"
+    name_raw: str  # as reported by nvidia-smi, e.g. "NVIDIA GeForce RTX 4090"
+    name_known: bool  # False → unknown model, stored raw + flagged
     vram_gb: float
-    cuda_version: str   # e.g. "CUDA 12.4"
-    driver_version: str # e.g. "550.54.15"
+    cuda_version: str  # e.g. "CUDA 12.4"
+    driver_version: str  # e.g. "550.54.15"
 
 
 def is_cuda_available() -> bool:
@@ -36,9 +36,9 @@ def query_gpu(index: int = 0) -> GpuInfo:
 
     row = rows[index]
     raw_name = row[0].strip()
-    vram_mib  = _parse_float(row[1])
-    driver    = row[2].strip()
-    cuda      = row[3].strip()
+    vram_mib = _parse_float(row[1])
+    driver = row[2].strip()
+    cuda = row[3].strip()
 
     name, name_known = normalize(raw_name)
     chip, chip_known = chip_from_name(name)
@@ -57,6 +57,7 @@ def query_gpu(index: int = 0) -> GpuInfo:
 
 
 # ── internal helpers ──────────────────────────────────────────────────────────
+
 
 def _run(cmd: list[str], timeout: int = 10) -> str:
     try:

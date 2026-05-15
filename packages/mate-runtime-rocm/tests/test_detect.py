@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -15,18 +14,18 @@ from mate_runtime_rocm._detect import (
 from mate_runtime_rocm._names import normalize
 
 from .fixtures import (
-    ROCMINFO_NO_GPU,
-    ROCMINFO_RX6700XT,
-    ROCMINFO_RX7900XTX,
-    ROCMINFO_UNKNOWN_CHIP,
     ROCM_SMI_DRIVER,
     ROCM_SMI_VRAM_6700XT,
     ROCM_SMI_VRAM_7900XTX,
     ROCM_VERSION_FILE,
+    ROCMINFO_NO_GPU,
+    ROCMINFO_RX6700XT,
+    ROCMINFO_RX7900XTX,
+    ROCMINFO_UNKNOWN_CHIP,
 )
 
-
 # ── _parse_rocminfo ───────────────────────────────────────────────────────────
+
 
 class TestParseRocminfo:
     def test_rx7900xtx(self):
@@ -58,6 +57,7 @@ class TestParseRocminfo:
 
 # ── _vram_gb ─────────────────────────────────────────────────────────────────
 
+
 class TestVramGb:
     def test_rx7900xtx_is_24gb(self):
         with patch("mate_runtime_rocm._detect._run", return_value=ROCM_SMI_VRAM_7900XTX):
@@ -75,6 +75,7 @@ class TestVramGb:
 
 
 # ── _rocm_version ─────────────────────────────────────────────────────────────
+
 
 class TestRocmVersion:
     def test_reads_version_file(self, tmp_path):
@@ -104,6 +105,7 @@ class TestRocmVersion:
 
 # ── _driver_version ───────────────────────────────────────────────────────────
 
+
 class TestDriverVersion:
     def test_parses_kernel_line(self):
         with patch("mate_runtime_rocm._detect._run", return_value=ROCM_SMI_DRIVER):
@@ -116,6 +118,7 @@ class TestDriverVersion:
 
 # ── query_gpu ─────────────────────────────────────────────────────────────────
 
+
 class TestQueryGpu:
     def _mock_run(self, rocminfo_out: str, vram_out: str, driver_out: str):
         def side_effect(cmd, **kwargs):
@@ -127,12 +130,19 @@ class TestQueryGpu:
             if "showdriverversion" in joined:
                 return driver_out
             return ""
+
         return side_effect
 
     def test_rx7900xtx_full(self):
-        with patch("mate_runtime_rocm._detect._run",
-                   side_effect=self._mock_run(ROCMINFO_RX7900XTX, ROCM_SMI_VRAM_7900XTX, ROCM_SMI_DRIVER)), \
-             patch("mate_runtime_rocm._detect.Path") as mock_path:
+        with (
+            patch(
+                "mate_runtime_rocm._detect._run",
+                side_effect=self._mock_run(
+                    ROCMINFO_RX7900XTX, ROCM_SMI_VRAM_7900XTX, ROCM_SMI_DRIVER
+                ),
+            ),
+            patch("mate_runtime_rocm._detect.Path") as mock_path,
+        ):
             mock_path.return_value.exists.return_value = False
             info = query_gpu(0)
 
@@ -144,9 +154,13 @@ class TestQueryGpu:
         assert info.driver_version == "6.7.0"
 
     def test_unknown_chip_flagged(self):
-        with patch("mate_runtime_rocm._detect._run",
-                   side_effect=self._mock_run(ROCMINFO_UNKNOWN_CHIP, "", "")), \
-             patch("mate_runtime_rocm._detect.Path") as mock_path:
+        with (
+            patch(
+                "mate_runtime_rocm._detect._run",
+                side_effect=self._mock_run(ROCMINFO_UNKNOWN_CHIP, "", ""),
+            ),
+            patch("mate_runtime_rocm._detect.Path") as mock_path,
+        ):
             mock_path.return_value.exists.return_value = False
             info = query_gpu(0)
 
@@ -155,15 +169,19 @@ class TestQueryGpu:
         assert info.name == "gfx9999"
 
     def test_no_gpu_raises(self):
-        with patch("mate_runtime_rocm._detect._run", return_value=ROCMINFO_NO_GPU), \
-             patch("mate_runtime_rocm._detect.Path") as mock_path:
+        with (
+            patch("mate_runtime_rocm._detect._run", return_value=ROCMINFO_NO_GPU),
+            patch("mate_runtime_rocm._detect.Path") as mock_path,
+        ):
             mock_path.return_value.exists.return_value = False
             with pytest.raises(RuntimeError, match="No AMD GPU found"):
                 query_gpu(0)
 
     def test_index_out_of_range_raises(self):
-        with patch("mate_runtime_rocm._detect._run", return_value=ROCMINFO_RX7900XTX), \
-             patch("mate_runtime_rocm._detect.Path") as mock_path:
+        with (
+            patch("mate_runtime_rocm._detect._run", return_value=ROCMINFO_RX7900XTX),
+            patch("mate_runtime_rocm._detect.Path") as mock_path,
+        ):
             mock_path.return_value.exists.return_value = False
             with pytest.raises(IndexError):
                 query_gpu(1)
@@ -171,21 +189,25 @@ class TestQueryGpu:
 
 # ── normalize ─────────────────────────────────────────────────────────────────
 
+
 class TestNormalize:
-    @pytest.mark.parametrize("raw, expected", [
-        ("AMD Radeon RX 7900 XTX",  "RX 7900 XTX"),
-        ("AMD Radeon RX 7900 XT",   "RX 7900 XT"),
-        ("AMD Radeon RX 6700 XT",   "RX 6700 XT"),
-        ("AMD Radeon VII",           "Radeon VII"),
-        ("AMD Radeon 780M",          "Radeon 780M"),
-        ("AMD Instinct MI300X",      "Instinct MI300X"),
-        ("AMD Radeon Pro W7900",     "Pro W7900"),
-    ])
+    @pytest.mark.parametrize(
+        "raw, expected",
+        [
+            ("AMD Radeon RX 7900 XTX", "RX 7900 XTX"),
+            ("AMD Radeon RX 7900 XT", "RX 7900 XT"),
+            ("AMD Radeon RX 6700 XT", "RX 6700 XT"),
+            ("AMD Radeon VII", "Radeon VII"),
+            ("AMD Radeon 780M", "Radeon 780M"),
+            ("AMD Instinct MI300X", "Instinct MI300X"),
+            ("AMD Radeon Pro W7900", "Pro W7900"),
+        ],
+    )
     def test_known_patterns(self, raw, expected):
         name, known = normalize(raw)
         assert name == expected
         assert known is True
 
     def test_empty_string(self):
-        name, known = normalize("")
+        _, known = normalize("")
         assert known is False

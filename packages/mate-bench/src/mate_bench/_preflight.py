@@ -12,8 +12,7 @@ class PreflightError(Exception):
 def check_engine_available(engine) -> None:
     if not engine.is_available():
         raise PreflightError(
-            f"Engine '{engine.name}' is not reachable. "
-            "Is the server running? (e.g. `ollama serve`)"
+            f"Engine '{engine.name}' is not reachable. Is the server running? (e.g. `ollama serve`)"
         )
 
 
@@ -27,8 +26,7 @@ def check_model_pulled(engine, model_name: str, *, local_only: bool = False) -> 
         return True
     if local_only:
         raise PreflightError(
-            f"Model '{model_name}' is not pulled and --local is set. "
-            f"Run: ollama pull {model_name}"
+            f"Model '{model_name}' is not pulled and --local is set. Run: ollama pull {model_name}"
         )
     return False
 
