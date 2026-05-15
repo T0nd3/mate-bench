@@ -80,12 +80,23 @@ class TestRun:
         assert "tokens_per_second" in measurement.median
         assert "tokens_per_second" in measurement.std_dev
 
-    def test_run_open_mode_raises(self, tmp_path):
+    def test_run_open_mode_without_setup_raises(self, tmp_path):
         w = LlmWorkload()
         engine = self._make_engine()
         with patch("mate_workload_llm.TEST_SETS_DIR", tmp_path):
-            with pytest.raises(NotImplementedError):
+            with pytest.raises(RuntimeError, match="setup_open"):
                 w.run("quick", Mode.OPEN, engine, runs=1, warmup_runs=0)
+
+    def test_run_open_mode_uses_user_model(self, tmp_path):
+        w = LlmWorkload()
+        engine = self._make_engine()
+        with patch("mate_workload_llm.TEST_SETS_DIR", tmp_path):
+            w.setup_open("quick", {"model": "deepseek-r1:14b"})
+            measurement = w.run("quick", Mode.OPEN, engine, runs=1, warmup_runs=0)
+        assert "tokens_per_second" in measurement.median
+        # engine was called with the user-specified model
+        call_args = engine.generate.call_args_list
+        assert all(args[0][0] == "deepseek-r1:14b" for args in call_args)
 
     def test_warmup_calls_not_in_stats(self, tmp_path):
         # warmup returns 200 t/s, measurement returns 50 t/s

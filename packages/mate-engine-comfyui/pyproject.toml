@@ -1,0 +1,35 @@
+[project]
+name = "mate-engine-comfyui"
+version = "0.1.0"
+description = "ComfyUI engine plugin for mate-bench"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "Benjamin Fäuster", email = "benjamin.faeuster@web.de"}]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Benchmark",
+]
+dependencies = [
+    "mate-bench>=0.1,<0.2",
+    "requests>=2.31",
+]
+
+[project.urls]
+Homepage = "https://github.com/T0nd3/mate-bench"
+Repository = "https://github.com/T0nd3/mate-bench"
+
+[project.entry-points."mate_bench.engine"]
+comfyui = "mate_engine_comfyui:ComfyUiEngine"
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mate_engine_comfyui"]

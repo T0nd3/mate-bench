@@ -1,0 +1,15 @@
+{
+  "version": "imagegen-512-v1",
+  "width": 512,
+  "height": 512,
+  "steps": 20,
+  "cfg": 7.0,
+  "sampler": "euler_ancestral",
+  "tasks": [
+    {"id": "t001", "prompt": "a red apple on a wooden table, photorealistic, sharp focus, studio lighting", "negative_prompt": "blurry, low quality"},
+    {"id": "t002", "prompt": "a cat sitting on a windowsill at sunset, warm light, digital art", "negative_prompt": "blurry, low quality"},
+    {"id": "t003", "prompt": "a futuristic city at night, neon lights reflecting in rain puddles, cyberpunk", "negative_prompt": "blurry, low quality"},
+    {"id": "t004", "prompt": "a bowl of ramen with steam rising, food photography, top down view", "negative_prompt": "blurry, low quality"},
+    {"id": "t005", "prompt": "a mountain landscape with snow and pine trees, oil painting style", "negative_prompt": "blurry, low quality"}
+  ]
+}

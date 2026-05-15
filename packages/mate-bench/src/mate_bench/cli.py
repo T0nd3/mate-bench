@@ -34,6 +34,7 @@ def run(
     engine: Optional[str] = typer.Option(None, "--engine", help="Override default engine"),
     profile: Optional[str] = typer.Option(None, "--profile", help="quick | standard | full (default: from config or 'standard')"),
     mode: str = typer.Option("closed", "--mode", help="closed | open"),
+    model: Optional[str] = typer.Option(None, "--model", help="Model name for open mode (e.g. 'deepseek-r1:14b')"),
     local: bool = typer.Option(False, "--local", help="Only already-installed models"),
     runs: int = typer.Option(5, "--runs", help="Number of measurement runs"),
     warmup_runs: int = typer.Option(1, "--warmup", help="Number of warmup runs"),
@@ -130,11 +131,20 @@ def run(
         prof_cfg = workload.profiles[profile]
 
         # Determine all models needed for this profile
-        required = (
-            workload.required_models(profile)
-            if hasattr(workload, "required_models")
-            else [prof_cfg.reference_engine_config.get("model", "")]
-        )
+        if bench_mode == Mode.OPEN:
+            if not model:
+                console.print(
+                    f"[red]--model is required for open mode "
+                    f"(e.g. --model deepseek-r1:14b)[/red]"
+                )
+                raise typer.Exit(1)
+            required = [model]
+        else:
+            required = (
+                workload.required_models(profile)
+                if hasattr(workload, "required_models")
+                else [prof_cfg.reference_engine_config.get("model", "")]
+            )
 
         # Model check / pull for each required model
         for model_name in required:
@@ -164,7 +174,10 @@ def run(
         check_vram(sys_info.vram_gb, prof_cfg.vram_required_gb, profile)
 
         # Setup test set(s)
-        workload.setup_closed(profile)
+        if bench_mode == Mode.OPEN:
+            workload.setup_open(profile, {"model": model})
+        else:
+            workload.setup_closed(profile)
 
         # Run
         console.print(
@@ -215,8 +228,12 @@ def run(
                 id=getattr(prof_cfg, "test_set_id", None),
             ),
             engine_config=EngineConfig(
-                is_reference=True,
-                settings=prof_cfg.reference_engine_config,
+                is_reference=(bench_mode == Mode.CLOSED),
+                settings=(
+                    prof_cfg.reference_engine_config
+                    if bench_mode == Mode.CLOSED
+                    else {"engine": selected_engine.name, "model": model}
+                ),
             ),
             system=sys_info,
             bench=BenchVersions(

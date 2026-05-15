@@ -26,6 +26,10 @@ class LlmWorkload:
     profiles: dict[str, ProfileConfig] = PROFILES
     test_sets: dict[str, TestSetSpec] = TEST_SETS
 
+    def __init__(self) -> None:
+        self._open_model: str | None = None
+        self._open_test_set_id: str | None = None
+
     def estimate_download(self, profile: str) -> int:
         return PROFILES[profile].download_size_bytes
 
@@ -56,7 +60,17 @@ class LlmWorkload:
             self._copy_test_set(PROFILES[profile].test_set_id)
 
     def setup_open(self, profile: str, user_inputs: dict[str, Any]) -> None:
-        raise NotImplementedError("open mode not yet supported for llm workload")
+        model = user_inputs.get("model", "").strip()
+        if not model:
+            raise ValueError("user_inputs must contain a non-empty 'model' key for open mode")
+        self._open_model = model
+        # Use the same test set as the closed profile (full profile → medium)
+        self._open_test_set_id = (
+            FULL_PROFILE_MODELS[0]["test_set_id"]
+            if profile == "full"
+            else PROFILES[profile].test_set_id
+        )
+        self._copy_test_set(self._open_test_set_id)
 
     def _load_prompts_by_id(self, test_set_id: str) -> list[dict[str, Any]]:
         cached = TEST_SETS_DIR / "llm" / BUNDLED_TEST_SETS[test_set_id].name
@@ -80,8 +94,25 @@ class LlmWorkload:
         runs: int,
         warmup_runs: int,
     ) -> Measurement:
-        if mode != Mode.CLOSED:
-            raise NotImplementedError("open mode not yet supported for llm workload")
+        if mode == Mode.OPEN:
+            if not self._open_model or not self._open_test_set_id:
+                raise RuntimeError("call setup_open() before run() in open mode")
+            prompts = self._load_prompts_by_id(self._open_test_set_id)
+            median_stats, std_dev_stats, throttling_detected = measure(
+                engine,  # type: ignore[arg-type]
+                self._open_model,
+                prompts,
+                runs,
+                warmup_runs,
+            )
+            return Measurement(
+                runs=runs,
+                warmup_runs=warmup_runs,
+                median=median_stats,
+                std_dev=std_dev_stats,
+                vram_peak_gb=0.0,
+                throttling_detected=throttling_detected,
+            )
 
         if profile == "full":
             return self._run_full(engine, runs, warmup_runs)

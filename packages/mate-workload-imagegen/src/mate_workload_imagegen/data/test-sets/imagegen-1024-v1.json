@@ -1,0 +1,13 @@
+{
+  "version": "imagegen-1024-v1",
+  "width": 1024,
+  "height": 1024,
+  "steps": 20,
+  "cfg": 7.0,
+  "sampler": "euler_ancestral",
+  "tasks": [
+    {"id": "t001", "prompt": "a detailed portrait of an astronaut in space, photorealistic, 8k, cinematic lighting", "negative_prompt": "blurry, low quality, artifacts"},
+    {"id": "t002", "prompt": "a fantasy castle on a cliff above clouds, epic fantasy landscape, golden hour", "negative_prompt": "blurry, low quality, artifacts"},
+    {"id": "t003", "prompt": "a close-up of a butterfly on a flower, macro photography, sharp detail, bokeh background", "negative_prompt": "blurry, low quality, artifacts"}
+  ]
+}

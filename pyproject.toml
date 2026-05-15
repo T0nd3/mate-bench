@@ -6,4 +6,8 @@ mate-bench = { workspace = true }
 mate-runtime-rocm = { workspace = true }
 mate-runtime-cuda = { workspace = true }
 mate-engine-ollama = { workspace = true }
+mate-engine-faster-whisper = { workspace = true }
+mate-engine-comfyui = { workspace = true }
 mate-workload-llm = { workspace = true }
+mate-workload-stt = { workspace = true }
+mate-workload-imagegen = { workspace = true }
