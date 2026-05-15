@@ -33,7 +33,7 @@ def _load_user_config() -> dict:
 
 @app.command()
 def run(
-    workloads: list[str] = typer.Argument(..., help="Workloads: llm, image, speech"),
+    workloads: list[str] = typer.Argument(..., help="Workloads: llm, stt, imagegen, tts"),
     engine: str | None = typer.Option(None, "--engine", help="Override default engine"),
     profile: str | None = typer.Option(
         None, "--profile", help="quick | standard | full (default: from config or 'standard')"
@@ -269,7 +269,7 @@ def run(
         table = Table(title=f"Result: {wl_name}/{profile}", show_header=False)
         table.add_column("Key", style="dim")
         table.add_column("Value", style="bold")
-        _add_tps_rows(table, measurement)
+        _add_metric_rows(table, measurement)
         table.add_row("Runs", f"{runs} + {warmup_runs} warmup")
         table.add_row("Throttling", "yes" if measurement.throttling_detected else "no")
         table.add_row("Saved to", str(out_path))
@@ -280,16 +280,27 @@ def run(
     )
 
 
-def _add_tps_rows(table: Table, measurement: SchemaMeasurement) -> None:
-    """Add tokens/s rows to a summary table, handling both flat and per-model median dicts."""
+def _add_metric_rows(table: Table, measurement: SchemaMeasurement) -> None:
+    """Add workload-specific metric rows to the summary table.
 
-    flat_tps = measurement.median.get("tokens_per_second")
-    if flat_tps is not None:
-        tps_sd = measurement.std_dev.get("tokens_per_second", 0.0)
-        table.add_row("Tokens/s (median)", f"{flat_tps:.1f}")
-        table.add_row("Tokens/s (std dev)", f"{tps_sd:.1f}")
+    Handles:
+    - LLM flat: tokens_per_second
+    - LLM multi-model: nested {model_key: {tokens_per_second: ...}}
+    - TTS: rtf, chars_per_second, total_audio_seconds
+    """
+    median = measurement.median
+    std_dev = measurement.std_dev
+
+    if "tokens_per_second" in median:
+        table.add_row("Tokens/s (median)", f"{median['tokens_per_second']:.1f}")
+        table.add_row("Tokens/s (std dev)", f"{std_dev.get('tokens_per_second', 0.0):.1f}")
+    elif "rtf" in median:
+        table.add_row("RTF (median)", f"{median['rtf']:.3f}")
+        table.add_row("RTF (std dev)", f"{std_dev.get('rtf', 0.0):.3f}")
+        table.add_row("Chars/s (median)", f"{median.get('chars_per_second', 0.0):.1f}")
+        table.add_row("Total audio (s)", f"{median.get('total_audio_seconds', 0.0):.1f}")
     else:
-        for model_key, stats in measurement.median.items():
+        for model_key, stats in median.items():
             tps = stats.get("tokens_per_second", 0.0) if isinstance(stats, dict) else 0.0
             table.add_row(f"Tokens/s {model_key}", f"{tps:.1f}")
 

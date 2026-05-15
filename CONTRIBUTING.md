@@ -36,9 +36,12 @@ packages/
   mate-workload-llm/           LLM token throughput (closed + open mode)
   mate-workload-stt/           Speech-to-text RTF + WER (LibriSpeech)
   mate-workload-imagegen/      Image generation throughput (open mode)
+  mate-workload-tts/           Text-to-speech RTF + chars/s (closed + open mode)
   mate-engine-ollama/          Ollama engine plugin
   mate-engine-faster-whisper/  faster-whisper engine plugin
   mate-engine-comfyui/         ComfyUI engine plugin
+  mate-engine-kokoro/          Kokoro TTS engine plugin
+  mate-engine-piper/           Piper TTS engine plugin
   mate-runtime-rocm/           AMD ROCm GPU detection
   mate-runtime-cuda/           NVIDIA CUDA GPU detection
 worker/                        Cloudflare Worker (submission API)
