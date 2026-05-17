@@ -32,9 +32,19 @@ def check_model_pulled(engine, model_name: str, *, local_only: bool = False) -> 
 
 
 def check_vram(vram_available_gb: float, vram_required_gb: float, profile: str) -> None:
-    if vram_available_gb > 0 and vram_available_gb < vram_required_gb:
+    if vram_available_gb <= 0:
+        return
+    if vram_available_gb < vram_required_gb:
         console.print(
             f"[yellow]Warning: profile '{profile}' requires ~{vram_required_gb:.1f} GB VRAM "
             f"but only {vram_available_gb:.1f} GB detected. "
             "Benchmark may be slow or fail.[/yellow]"
+        )
+    elif vram_available_gb - vram_required_gb < 3.0:
+        headroom = vram_available_gb - vram_required_gb
+        console.print(
+            f"[yellow]Warning: tight VRAM headroom — {vram_available_gb:.1f} GB total, "
+            f"~{vram_required_gb:.1f} GB needed for model load, {headroom:.1f} GB remaining. "
+            "Background apps (browsers, Discord, overlays) can consume 2-5 GB of VRAM. "
+            "Close them before benchmarking for reliable results.[/yellow]"
         )

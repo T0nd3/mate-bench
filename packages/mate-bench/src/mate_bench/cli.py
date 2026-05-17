@@ -225,6 +225,18 @@ def run(
             ts_hash = workload.test_set_hash(profile)
 
         # Build result
+        # Build engine settings — merge env snapshot if engine supports it
+        base_settings = (
+            prof_cfg.reference_engine_config
+            if bench_mode == Mode.CLOSED
+            else {"engine": selected_engine.name, "model": model}
+        )
+        if hasattr(selected_engine, "engine_config_snapshot"):
+            env_snap = selected_engine.engine_config_snapshot()
+            engine_settings = {**base_settings, "_env": env_snap} if env_snap else base_settings
+        else:
+            engine_settings = base_settings
+
         result = BenchmarkResult.new(
             mode=bench_mode.value,
             workload=wl_name,
@@ -238,11 +250,7 @@ def run(
             ),
             engine_config=EngineConfig(
                 is_reference=(bench_mode == Mode.CLOSED),
-                settings=(
-                    prof_cfg.reference_engine_config
-                    if bench_mode == Mode.CLOSED
-                    else {"engine": selected_engine.name, "model": model}
-                ),
+                settings=engine_settings,
             ),
             system=sys_info,
             bench=BenchVersions(

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any, ClassVar
 
 from mate_bench.plugin import PluginManifest
@@ -7,6 +8,15 @@ from mate_bench.schema import ModelInfo
 
 from ._client import GenerateResult, OllamaClient
 from ._models import model_info_from_ollama
+
+# Env vars that affect Ollama inference performance — captured at benchmark time
+_PERF_ENV_VARS = (
+    "OLLAMA_FLASH_ATTENTION",
+    "OLLAMA_KV_CACHE_TYPE",
+    "OLLAMA_NUM_PARALLEL",
+    "OLLAMA_NUM_GPU",
+    "OLLAMA_KEEP_ALIVE",
+)
 
 
 class OllamaEngine:
@@ -41,3 +51,12 @@ class OllamaEngine:
 
     def pull(self, model: str, on_progress=None) -> None:
         self._client.pull_model(model, on_progress=on_progress)
+
+    def engine_config_snapshot(self) -> dict[str, str]:
+        """Return Ollama performance env vars that were set at benchmark time.
+
+        Included in the result YAML under engine_config.settings._env so that
+        differences in Flash Attention, KV-cache type etc. are visible when
+        comparing results across machines.
+        """
+        return {k: os.environ[k] for k in _PERF_ENV_VARS if k in os.environ}
